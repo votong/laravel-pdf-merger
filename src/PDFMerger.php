@@ -190,8 +190,10 @@ class PDFMerger
         if ($this->files->count() == 0) {
             throw new \Exception("No PDFs to merge.");
         }
+
         $fpdi = $this->fpdi;
         $files = $this->files;
+
         foreach ($files as $index => $file) {
             $file['orientation'] = is_null($file['orientation']) ? $orientation : $file['orientation'];
             $count = $fpdi->setSourceFile($file['name']);

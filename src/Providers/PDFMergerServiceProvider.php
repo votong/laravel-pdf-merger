@@ -24,9 +24,8 @@ class PDFMergerServiceProvider extends ServiceProvider
      */
     public function register()
     {
-      $this->app->singleton('PDFMerger', function ($app) {
-          $pdfMerger = new PDFMerger($app['files']);
-          return $pdfMerger;
-      });
+        $this->app->singleton('PDFMerger', function ($app) {
+            return new PDFMerger($app['files']);
+        });
     }
 }
