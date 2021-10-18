@@ -1,0 +1,30 @@
+{
+    "name": "votong/laravel-pdf-merger",
+    "version": "1.0.1",
+    "type": "library",
+    "description": "Package for Laravel that merges multiple PDFs into one.",
+    "keywords": [
+      "votong",
+      "laravel",
+      "pdf",
+      "merger",
+      "pdfmerger",
+      "pdf-merger"
+    ],
+    "license": "MIT",
+    "authors": [
+      {
+        "name": "Vo Tong"
+      }
+    ],
+    "require": {
+      "illuminate/support": ">=5.5",
+      "setasign/fpdf": "1.8.*",
+      "setasign/fpdi": "^2.0"
+    },
+    "autoload": {
+      "psr-4": {
+          "VoTong\\LaravelPDFMerger\\": "src"
+      }
+    }
+}
