@@ -15,40 +15,48 @@ class PDFMerger
      * @var Storage
      */
     protected $fileSystem = Storage::class;
+
+    /**
+     * @var string
+     */
+    protected $temporaryFolder = 'tmp/';
+
     /**
      * Hold all the files which will be merged
      *
      * @var Collection
      */
     protected $files = Collection::class;
+
     /**
      * Holds every tmp file so they can be removed during the deconstruction
      *
      * @var Collection
      */
-    protected $tmpFiles = Collection::class;
+    protected $temporaryFiles = Collection::class;
+
     /**
      * The actual PDF Service
      *
      * @var FPDI
      */
     protected $fpdi = Fpdi::class;
+
     /**
      * The final file name
      *
      * @var string
      */
-    protected $fileName = 'undefined.pdf';
+    protected $fileName = 'merged.pdf';
 
     /**
      * Construct and initialize a new instance
      */
     public function __construct()
     {
-        $this->fileSystem = Storage::disk('local');
-        $this->createDirectoryForTemporaryFiles();
         $this->fpdi = new Fpdi();
-        $this->tmpFiles = collect([]);
+        $this->fileSystem = Storage::disk('local');
+        $this->temporaryFiles = collect([]);
         $this->files = collect([]);
     }
 
@@ -57,10 +65,7 @@ class PDFMerger
      */
     public function __destruct()
     {
-        $filesystem = $this->fileSystem;
-        $this->tmpFiles->each(function ($filePath) use ($filesystem) {
-            $filesystem->delete($filePath);
-        });
+        $this->fileSystem->delete($this->temporaryFiles);
     }
 
     /**
@@ -89,9 +94,9 @@ class PDFMerger
      *
      * @return string
      */
-    public function download()
+    public function download($fileName = null)
     {
-        return $this->fpdi->Output($this->fileName, 'D');
+        return $this->fpdi->Output($fileName ?: $this->fileName, 'D');
     }
 
     /**
@@ -137,11 +142,11 @@ class PDFMerger
      */
     public function addPDFString($string, $pages = 'all', $orientation = null)
     {
-        $filePath = storage_path('tmp/' . Str::random(16) . '.pdf');
+        $filePath = $this->temporaryFolder . Str::random(16) . '.pdf';
         $this->fileSystem->put($filePath, $string);
-        $this->tmpFiles->push($filePath);
+        $this->temporaryFiles->push($filePath);
 
-        return $this->addPathToPDF($filePath, $pages, $orientation);
+        return $this->addPathToPDF($this->fileSystem->getAdapter()->getPathPrefix() . $filePath, $pages, $orientation);
     }
 
     /**
@@ -169,6 +174,7 @@ class PDFMerger
         } else {
             throw new \Exception("Could not locate PDF on '$filePath'");
         }
+
         return $this;
     }
 
@@ -183,6 +189,8 @@ class PDFMerger
     public function duplexMerge($orientation = 'P')
     {
         $this->merge($orientation, true);
+
+        return $this;
     }
 
     public function merge($orientation = 'P', $duplex = false)
@@ -221,6 +229,8 @@ class PDFMerger
                 $fpdi->AddPage($file['orientation'], [$size['width'], $size['height']]);
             }
         }
+
+        return $this;
     }
 
     /**
@@ -238,26 +248,14 @@ class PDFMerger
         preg_match_all('!\d+!', $firstLine, $matches);
         $pdfversion = implode('.', $matches[0]);
         if ($pdfversion > "1.4") {
-            $newFilePath = storage_path('tmp/' . Str::random(16) . '.pdf');
+            $newFilePath = $this->temporaryFolder . Str::random(16) . '.pdf';
             //execute shell script that converts PDF to correct version and saves it to tmp folder
             shell_exec('gs -dBATCH -dNOPAUSE -q -sDEVICE=pdfwrite -sOutputFile="' . $newFilePath . '" "' . $filePath . '"');
-            $this->tmpFiles->push($newFilePath);
+            $this->temporaryFiles->push($newFilePath);
             $filePath = $newFilePath;
         }
 
         //return correct file path
         return $filePath;
-    }
-
-    /**
-     * Create a the temporary file directory if it doesn't exist.
-     *
-     * @return void
-     */
-    protected function createDirectoryForTemporaryFiles(): void
-    {
-        if (!$this->fileSystem->exists(storage_path('tmp'))) {
-            $this->fileSystem->makeDirectory(storage_path('tmp'));
-        }
     }
 }
