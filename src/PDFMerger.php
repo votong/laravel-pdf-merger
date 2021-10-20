@@ -120,6 +120,17 @@ class PDFMerger
     }
 
     /**
+     * Get the merged PDF content as binary string
+     * Alias of string() method
+     *
+     * @return string
+     */
+    public function output()
+    {
+        return $this->string();
+    }
+
+    /**
      * Set the generated PDF fileName
      * @param string $fileName
      *
