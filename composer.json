@@ -1,6 +1,6 @@
 {
     "name": "votong/laravel-pdf-merger",
-    "version": "0.0.2",
+    "version": "v0.0.3",
     "type": "library",
     "description": "Package for Laravel that merges multiple PDFs into one.",
     "keywords": [
