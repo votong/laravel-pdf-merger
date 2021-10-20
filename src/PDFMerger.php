@@ -193,7 +193,7 @@ class PDFMerger
         return $this;
     }
 
-    public function merge($orientation = 'P', $duplex = false)
+    public function merge($orientation = null, $duplex = false)
     {
         if ($this->files->count() == 0) {
             throw new \Exception("No PDFs to merge.");
@@ -203,14 +203,14 @@ class PDFMerger
         $files = $this->files;
 
         foreach ($files as $index => $file) {
-            $file['orientation'] = is_null($file['orientation']) ? $orientation : $file['orientation'];
+            $file['orientation'] = $file['orientation'] ?? $orientation;
             $count = $fpdi->setSourceFile($file['name']);
             if ($file['pages'] == 'all') {
                 $pages = $count;
                 for ($i = 1; $i <= $count; $i++) {
                     $template = $fpdi->importPage($i);
                     $size = $fpdi->getTemplateSize($template);
-                    $fpdi->AddPage($file['orientation'], [$size['width'], $size['height']]);
+                    $fpdi->AddPage($file['orientation'] ?? ($size['width'] > $size['height'] ? 'L' : 'P'), [$size['width'], $size['height']]);
                     $fpdi->useTemplate($template);
                 }
             } else {
@@ -220,13 +220,13 @@ class PDFMerger
                         throw new \Exception("Could not load page '$page' in PDF '" . $file['name'] . "'. Check that the page exists.");
                     }
                     $size = $fpdi->getTemplateSize($template);
-                    $fpdi->AddPage($file['orientation'], [$size['width'], $size['height']]);
+                    $fpdi->AddPage($file['orientation'] ?? ($size['width'] > $size['height'] ? 'L' : 'P'), [$size['width'], $size['height']]);
                     $fpdi->useTemplate($template);
                 }
             }
 
             if ($duplex && $pages % 2 && $index < (count($files) - 1)) {
-                $fpdi->AddPage($file['orientation'], [$size['width'], $size['height']]);
+                $fpdi->AddPage($file['orientation'] ?? ($size['width'] > $size['height'] ? 'L' : 'P'), [$size['width'], $size['height']]);
             }
         }
 
